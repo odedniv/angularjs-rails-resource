@@ -435,13 +435,13 @@ All of the instance methods will update the instance in-place on response and wi
 * get() - Refreshes the instance from the server.
     * **returns** {promise} - A promise that will be resolved with the instance itself
 
-* create() - Submits the resource instance to the resource's base URL (e.g. /books) using a POST
+* create(queryParams) - Submits the resource instance to the resource's base URL (e.g. /books) using a POST
     * **returns** {promise} - A promise that will be resolved with the instance itself
 
-* update() - Submits the resource instance to the resource's URL (e.g. /books/1234) using a PUT
+* update(queryParams) - Submits the resource instance to the resource's URL (e.g. /books/1234) using a PUT
     * **returns** {promise} - A promise that will be resolved with the instance itself
 
-* save() - Calls <code>create</code> if <code>isNew</code> returns true, otherwise it calls <code>update</code>.
+* save(queryParams) - Calls <code>create</code> if <code>isNew</code> returns true, otherwise it calls <code>update</code>.
 
 * remove(), delete() - Executes an HTTP DELETE against the resource's URL (e.g. /books/1234)
     * **returns** {promise} - A promise that will be resolved with the instance itself

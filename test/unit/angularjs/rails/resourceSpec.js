@@ -219,6 +219,16 @@ describe('railsResourceFactory', function () {
             expect(data).toEqualData({id: 123, abcDef: 'xyz'});
         });
 
+        it('should be able to create new instance and save it with query params', function () {
+            var data = new Test({abcDef: 'xyz'});
+
+            $httpBackend.expectPOST('/test?x=1&y=2', {test: {abc_def: 'xyz'}}).respond(200, {test: {id: 123, abc_def: 'xyz'}});
+            data.create({x: 1, y: 2});
+            $httpBackend.flush();
+
+            expect(data).toEqualData({id: 123, abcDef: 'xyz'});
+        });
+
         it("should return a promise when calling save", function () {
             var promise, data;
 
@@ -233,6 +243,16 @@ describe('railsResourceFactory', function () {
 
             $httpBackend.expectPOST('/test', {test: {abc_def: 'xyz'}}).respond(200, {test: {id: 123, abc_def: 'xyz'}});
             data.save();
+            $httpBackend.flush();
+
+            expect(data).toEqualData({id: 123, abcDef: 'xyz'});
+        });
+
+        it('should be able to create new instance and save it using save with query params', function () {
+            var data = new Test({abcDef: 'xyz'});
+
+            $httpBackend.expectPOST('/test?x=1&y=2', {test: {abc_def: 'xyz'}}).respond(200, {test: {id: 123, abc_def: 'xyz'}});
+            data.save({x: 1, y: 2});
             $httpBackend.flush();
 
             expect(data).toEqualData({id: 123, abcDef: 'xyz'});
@@ -255,7 +275,24 @@ describe('railsResourceFactory', function () {
             expect(data).toEqualData({id: 123, abcDef: 'xyz', xyz: 'abc', extra: 'test'});
         });
 
-         it('should be able to create new instance and update it using save', function () {
+        it('should be able to create new instance and update it with query params', function () {
+            var data = new Test({abcDef: 'xyz'});
+
+            $httpBackend.expectPOST('/test', {test: {abc_def: 'xyz'}}).respond(200, {test: {id: 123, abc_def: 'xyz'}});
+            data.create();
+            $httpBackend.flush(1);
+
+            expect(data).toEqualData({id: 123, abcDef: 'xyz'});
+
+            $httpBackend.expectPUT('/test/123?x=1&y=2', {test: {abc_def: 'xyz', id: 123, xyz: 'abc'}}).respond(200, {test: {id: 123, abc_def: 'xyz', xyz: 'abc', extra: 'test'}});
+            data.xyz = 'abc';
+            data.update({x: 1, y: 2});
+            $httpBackend.flush();
+
+            expect(data).toEqualData({id: 123, abcDef: 'xyz', xyz: 'abc', extra: 'test'});
+        });
+
+        it('should be able to create new instance and update it using save', function () {
             var data = new Test({abcDef: 'xyz'});
 
             $httpBackend.expectPOST('/test', {test: {abc_def: 'xyz'}}).respond(200, {test: {id: 123, abc_def: 'xyz'}});
@@ -267,6 +304,23 @@ describe('railsResourceFactory', function () {
             $httpBackend.expectPUT('/test/123', {test: {abc_def: 'xyz', id: 123, xyz: 'abc'}}).respond(200, {test: {id: 123, abc_def: 'xyz', xyz: 'abc', extra: 'test'}});
             data.xyz = 'abc';
             data.save();
+            $httpBackend.flush();
+
+            expect(data).toEqualData({id: 123, abcDef: 'xyz', xyz: 'abc', extra: 'test'});
+        });
+
+        it('should be able to create new instance and update it using save with query params', function () {
+            var data = new Test({abcDef: 'xyz'});
+
+            $httpBackend.expectPOST('/test', {test: {abc_def: 'xyz'}}).respond(200, {test: {id: 123, abc_def: 'xyz'}});
+            data.save();
+            $httpBackend.flush(1);
+
+            expect(data).toEqualData({id: 123, abcDef: 'xyz'});
+
+            $httpBackend.expectPUT('/test/123?x=1&y=2', {test: {abc_def: 'xyz', id: 123, xyz: 'abc'}}).respond(200, {test: {id: 123, abc_def: 'xyz', xyz: 'abc', extra: 'test'}});
+            data.xyz = 'abc';
+            data.save({x: 1, y: 2});
             $httpBackend.flush();
 
             expect(data).toEqualData({id: 123, abcDef: 'xyz', xyz: 'abc', extra: 'test'});

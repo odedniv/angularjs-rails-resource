@@ -736,12 +736,12 @@
                     };
                 });
 
-                RailsResource.prototype.create = function () {
-                    return this.$post(this.$url(), this);
+                RailsResource.prototype.create = function (queryParams) {
+                    return this.$post(this.$url(), this, queryParams);
                 };
 
-                RailsResource.prototype.update = function () {
-                    return this['$' + this.constructor.config.updateMethod](this.$url(), this);
+                RailsResource.prototype.update = function (queryParams) {
+                    return this['$' + this.constructor.config.updateMethod](this.$url(), this, queryParams);
                 };
 
                 RailsResource.prototype.get = function () {
@@ -754,11 +754,11 @@
                         this[idAttribute] === null;
                 };
 
-                RailsResource.prototype.save = function () {
+                RailsResource.prototype.save = function (queryParams) {
                     if (this.isNew()) {
-                        return this.create();
+                        return this.create(queryParams);
                     } else {
-                        return this.update();
+                        return this.update(queryParams);
                     }
                 };
 
