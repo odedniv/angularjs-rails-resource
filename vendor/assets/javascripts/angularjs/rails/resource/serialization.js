@@ -454,9 +454,10 @@
                  *
                  * @param data The object to deserialize
                  * @param Resource (optional) The resource type to deserialize the result into
+                 * @param triggerPhase (optional) Whether to trigger the afterDeserialize phase
                  * @returns {*} A new object or an instance of Resource populated with deserialized data.
                  */
-                Serializer.prototype.deserializeData = function (data, Resource) {
+                Serializer.prototype.deserializeData = function (data, Resource, triggerPhase) {
                     var result = data,
                         self = this;
 
@@ -464,7 +465,7 @@
                         result = [];
 
                         angular.forEach(data, function (value) {
-                            result.push(self.deserializeData(value, Resource));
+                            result.push(self.deserializeData(value, Resource, triggerPhase));
                         });
                     } else if (angular.isObject(data)) {
                         if (angular.isDate(data)) {
@@ -476,19 +477,23 @@
                             result = new Resource.config.resourceConstructor();
                         }
 
-                        this.deserializeObject(result, data);
+                        this.deserializeObject(result, data, triggerPhase);
 
                     }
 
                     return result;
                 };
 
-                Serializer.prototype.deserializeObject = function (result, data) {
+                Serializer.prototype.deserializeObject = function (result, data, triggerPhase) {
 
                     var tthis = this;
                     angular.forEach(data, function (value, key) {
                         tthis.deserializeAttribute(result, key, value);
                     });
+                    if (triggerPhase && result.constructor.runInterceptorPhase) {
+                        result.constructor.runInterceptorPhase('afterDeserialize', result);
+                    }
+
                     return data;
                 };
 
@@ -518,7 +523,7 @@
                     if (this.preservedAttributes[attributeName]) {
                         data[attributeName] = value;
                     } else {
-                        data[attributeName] = serializer ? serializer.deserialize(value, NestedResource) : this.deserializeData(value, NestedResource);
+                        data[attributeName] = serializer ? serializer.deserialize(value, NestedResource, true) : this.deserializeData(value, NestedResource, true);
                     }
                 };
 
@@ -531,11 +536,12 @@
                  *
                  * @param data The object to deserialize
                  * @param Resource (optional) The resource type to deserialize the result into
+                 * @param triggerPhase (optional) Whether to trigger the afterDeserialize phase
                  * @returns {*} A new object or an instance of Resource populated with deserialized data
                  */
-                Serializer.prototype.deserialize = function (data, Resource) {
+                Serializer.prototype.deserialize = function (data, Resource, triggerPhase) {
                     // just calls deserializeValue for now so we can more easily add on custom attribute logic for deserialize too
-                    return this.deserializeData(data, Resource);
+                    return this.deserializeData(data, Resource, triggerPhase);
                 };
 
                 Serializer.prototype.pluralize = function (value) {
