@@ -78,6 +78,7 @@
                     this.preservedAttributes = {};
                     this.customSerializers = {};
                     this.nestedResources = {};
+                    this.polymorphics = {};
                     this.options = angular.extend({excludeByDefault: false}, defaultOptions, options || {});
 
                     if (customizer) {
@@ -155,6 +156,25 @@
                     if (serializer) {
                         this.serializeWith(attributeName, serializer);
                     }
+
+                    return this;
+                };
+
+                /**
+                 * Specifies a polymorphic association according to Rails' standards.
+                 * Polymorphic associations have a <code>{name}_id</code> and <code>{name}_type</code> columns in the database.
+                 *
+                 * The <code>{name}_type</code> attribute will specify which resource will be used to serialize and deserialize the data.
+                 *
+                 * @param names... {string} Variable number of name parameters
+                 * @returns {Serializer} this for chaining support
+                 */
+                Serializer.prototype.polymorphic = function () {
+                    var polymorphics = this.polymorphics;
+
+                    angular.forEach(arguments, function(attributeName) {
+                        polymorphics[attributeName] = true;
+                    });
 
                     return this;
                 };
@@ -317,10 +337,17 @@
                 /**
                  * Returns a reference to the nested resource that has been specified for the attribute.
                  * @param attributeName The attribute name
+                 * @param data the entire object being serialized
                  * @returns {*} undefined if no nested resource has been specified or a reference to the nested resource class
                  */
-                Serializer.prototype.getNestedResource = function (attributeName) {
-                    return RailsResourceInjector.getDependency(this.nestedResources[attributeName]);
+                Serializer.prototype.getNestedResource = function (attributeName, data) {
+                    var resourceName;
+                    if (!this.polymorphics[attributeName]) {
+                        resourceName = this.nestedResources[attributeName];
+                    } else {
+                        resourceName = data[attributeName + '_type'];
+                    }
+                    return RailsResourceInjector.getDependency(resourceName);
                 };
 
                 /**
@@ -330,10 +357,11 @@
                  * is used.  Custom serializers specified using serializeWith take precedence over the nested resource serializer.
                  *
                  * @param attributeName The attribute name
+                 * @param data the entire object being serialized
                  * @returns {*} undefined if no custom serializer has been specified or an instance of the Serializer
                  */
-                Serializer.prototype.getAttributeSerializer = function (attributeName) {
-                    var resource = this.getNestedResource(attributeName),
+                Serializer.prototype.getAttributeSerializer = function (attributeName, data) {
+                    var resource = this.getNestedResource(attributeName, data),
                         serializer = this.customSerializers[attributeName];
 
                     // custom serializer takes precedence over resource serializer
@@ -376,14 +404,14 @@
                     return result;
                 };
 
-                Serializer.prototype.serializeObject = function(result, data){
+                Serializer.prototype.serializeObject = function(result, data) {
 
 
                     var tthis = this;
                     angular.forEach(data, function (value, key) {
                         // if the value is a function then it can't be serialized to JSON so we'll just skip it
                         if (!angular.isFunction(value)) {
-                            tthis.serializeAttribute(result, key, value);
+                            tthis.serializeAttribute(result, key, value, data);
                         }
                     });
                     return data;
@@ -393,12 +421,13 @@
                  * Transforms an attribute and its value and stores it on the parent data object.  The attribute will be
                  * renamed as needed and the value itself will be serialized as well.
                  *
-                 * @param data The object that the attribute will be added to
+                 * @param result The object that the attribute will be added to
                  * @param attribute The attribute to transform
                  * @param value The current value of the attribute
+                 * @param data the entire object being serialized
                  */
-                Serializer.prototype.serializeAttribute = function (data, attribute, value) {
-                    var serializer = this.getAttributeSerializer(attribute),
+                Serializer.prototype.serializeAttribute = function (result, attribute, value, data) {
+                    var serializer = this.getAttributeSerializer(attribute, data),
                         serializedAttributeName = this.getSerializedAttributeName(attribute);
 
                     // undefined means the attribute should be excluded from serialization
@@ -406,7 +435,7 @@
                         return;
                     }
 
-                    data[serializedAttributeName] = serializer ? serializer.serialize(value) : this.serializeData(value);
+                    result[serializedAttributeName] = serializer ? serializer.serialize(value) : this.serializeData(value);
                 };
 
                 /**
@@ -432,14 +461,14 @@
                                         itemValue = itemValue.call(item, item);
                                     }
 
-                                    self.serializeAttribute(item, key, itemValue);
+                                    self.serializeAttribute(item, key, itemValue, data);
                                 });
                             } else {
                                 if (angular.isFunction(value)) {
                                     value = value.call(data, data);
                                 }
 
-                                self.serializeAttribute(result, key, value);
+                                self.serializeAttribute(result, key, value, data);
                             }
                         });
                     }
@@ -488,7 +517,7 @@
 
                     var tthis = this;
                     angular.forEach(data, function (value, key) {
-                        tthis.deserializeAttribute(result, key, value);
+                        tthis.deserializeAttribute(result, key, value, data);
                     });
                     if (triggerPhase && result.constructor.runInterceptorPhase) {
                         result.constructor.runInterceptorPhase('afterDeserialize', result);
@@ -502,11 +531,12 @@
                  * Transforms an attribute and its value and stores it on the parent data object.  The attribute will be
                  * renamed as needed and the value itself will be deserialized as well.
                  *
-                 * @param data The object that the attribute will be added to
+                 * @param result The object that the attribute will be added to
                  * @param attribute The attribute to transform
                  * @param value The current value of the attribute
+                 * @param data the entire object being deserialized
                  */
-                Serializer.prototype.deserializeAttribute = function (data, attribute, value) {
+                Serializer.prototype.deserializeAttribute = function (result, attribute, value, data) {
                     var serializer,
                         NestedResource,
                         attributeName = this.getDeserializedAttributeName(attribute);
@@ -516,14 +546,14 @@
                         return;
                     }
 
-                    serializer = this.getAttributeSerializer(attributeName);
-                    NestedResource = this.getNestedResource(attributeName);
+                    serializer = this.getAttributeSerializer(attributeName, data);
+                    NestedResource = this.getNestedResource(attributeName, data);
 
                     // preserved attributes are assigned unmodified
                     if (this.preservedAttributes[attributeName]) {
-                        data[attributeName] = value;
+                        result[attributeName] = value;
                     } else {
-                        data[attributeName] = serializer ? serializer.deserialize(value, NestedResource, true) : this.deserializeData(value, NestedResource, true);
+                        result[attributeName] = serializer ? serializer.deserialize(value, NestedResource, true) : this.deserializeData(value, NestedResource, true);
                     }
                 };
 
