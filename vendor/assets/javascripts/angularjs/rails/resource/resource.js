@@ -118,6 +118,7 @@
                             response = railsRootWrapper.unwrap(response, this.constructor, true);
                         }
                         angular.extend(this, response.data);
+                        this.constructor.runInterceptorPhase('afterDeserialize', this);
                     }
                 }
 
@@ -314,6 +315,14 @@
                  * * afterResponseError: Interceptors get called when a previous interceptor threw an error or
                  *      resolved with a rejection.
                  *
+                 * Finally, for each deserialized resource including associations, deserialization phases are called.
+                 *
+                 * The valid deserialization phases are:
+                 *
+                 * * afterDeserialize: Interceptors are called after a resource has been deserialized.
+                 * * afterDeserializeError: Interceptors are called when a previous interceptor threw an error or
+                 *      resolved with a rejection.
+                 *
                  * @param {String | Object} interceptor
                  */
                 RailsResource.addInterceptor = function (interceptor) {
@@ -323,7 +332,7 @@
                 /**
                  * Adds an interceptor callback function for the specified phase.
                  * @param {String} phase The interceptor phase, one of:
-                 *      beforeRequest, request, beforeResponse, response, afterResponse
+                 *      beforeRequest, request, beforeResponse, response, afterResponse, afterDeserialize
                  * @param fn The function to call.
                  */
                 RailsResource.intercept = function (phase, fn) {
@@ -405,6 +414,16 @@
                  */
                 RailsResource.interceptAfterResponse = function (fn) {
                     this.intercept('afterResponse', fn);
+                };
+
+                /**
+                 * Adds interceptor on 'afterDeserialize' phase.
+                 * @param fn(response data, constructor, context) - response data is either the resource instance returned or an array of resource instances,
+                 *      constructor is the resource class calling the function,
+                 *      context is the resource instance of the calling method (create, update, delete) or undefined if the method was a class method (get, query)
+                 */
+                RailsResource.interceptAfterDeserialize = function (fn) {
+                    this.intercept('afterDeserialize', fn);
                 };
 
                 /**
@@ -506,6 +525,7 @@
                 };
 
                 RailsResource.runInterceptorPhase = function (phase, context, promise) {
+                    promise = promise || $q.resolve(context);
                     var config = this.config, chain = [];
 
                     forEachDependency(config.interceptors, function (interceptor) {
@@ -547,7 +567,7 @@
                         config = angular.extend(angular.copy(this.config), resourceConfigOverrides || {}),
                         resourceConstructor = config.resourceConstructor,
                         abortDeferred = $q.defer();
-                    
+
                     function abortRequest() {
                         abortDeferred.resolve();
                     }
@@ -634,6 +654,7 @@
 
                     promise = this.callAfterResponseInterceptors(promise, context);
                     promise = this.runInterceptorPhase('afterResponse', context, promise);
+                    promise = this.runInterceptorPhase('afterDeserialize', context, promise);
                     return extendPromise(promise, {
                         resource: config.resourceConstructor,
                         context: context,
