@@ -433,6 +433,11 @@ passed to the function is still a Resource instance as long as another transform
         * **data** {object} - The result, either an array of resource instances or a single resource instance.
         * **resource** {Resource function} - The Resource constructor that is calling the function
 
+* afterDeserialize(fn(data, resource, context)) - See [Interceptors](#interceptors) for more information.  This function is called after a resource (including assocations) has been deserialized.
+    * fn(data, resource) {function} - The function to add as an interceptor
+        * **data** {object} - The result, either an array of resource instances or a single resource instance.
+        * **resource** {Resource function} - The Resource constructor that is calling the function
+
 ### Instance Methods
 The instance methods can be used on any instance (created manually or returned in a promise response) of a resource.
 All of the instance methods will update the instance in-place on response and will resolve the promise with the current instance.
@@ -536,6 +541,8 @@ The customizer function passed to the railsSerializer has available to it the fo
 * add (attributeName, value) - Allows custom attribute creation as part of the serialization to JSON.  The parameter <code>value</code> can be defined as function that takes a parameter of the containing object and returns a value that should be included in the JSON.
 
 * serializeWith (attributeName, serializer) - Specifies a custom serializer that should be used for the attribute.  The serializer can be specified either as a <code>string</code> reference to a registered service or as a Serializer constructor returned from <code>railsSerializer</code>
+
+* polymorphic (attributeName...) - Specifies a polymorphic association according to Rails' standards. Polymorphic associations have a <code>{name}_id</code> and <code>{name}_type</code> columns in the database. The <code>{name}_type</code> attribute will specify which resource will be used to serialize and deserialize the data.
 
 ### Serializer Methods
 The serializers are defined using mostly instance prototype methods.  For information on those methods please see the inline documentation.  There are however a couple of class methods that

@@ -1,3 +1,10 @@
+<a name="2.3.0"></a>
+# 2.3.0
+## Features
+- Added ability to abort requests - #213 (@saicheg)
+- Support for polymorphic associations - #217 (@odedniv)
+- Added afterDeserialize interceptor phase that runs after deserialization of every resource - #218 (@odedniv)
+
 <a name="2.2.2"></a>
 # 2.2.2
 ## Bug Fixes

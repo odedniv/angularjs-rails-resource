@@ -320,8 +320,6 @@
                  * The valid deserialization phases are:
                  *
                  * * afterDeserialize: Interceptors are called after a resource has been deserialized.
-                 * * afterDeserializeError: Interceptors are called when a previous interceptor threw an error or
-                 *      resolved with a rejection.
                  *
                  * @param {String | Object} interceptor
                  */
