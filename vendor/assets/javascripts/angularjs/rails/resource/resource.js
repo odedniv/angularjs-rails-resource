@@ -567,7 +567,6 @@
                         config = angular.extend(angular.copy(this.config), resourceConfigOverrides || {}),
                         resourceConstructor = config.resourceConstructor,
                         abortDeferred = $q.defer();
-                        self = this;
 
                     function abortRequest() {
                         abortDeferred.resolve();
