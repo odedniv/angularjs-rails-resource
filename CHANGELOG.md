@@ -1,3 +1,8 @@
+<a name="2.3.1"></a>
+# 2.3.1
+## Bug Fixes
+- Updated bower and NPM distributions to fix invalid main reference for NPM package
+
 <a name="2.3.0"></a>
 # 2.3.0
 ## Features

@@ -22,7 +22,7 @@ module.exports = function(grunt) {
     },
 
     dirs: {
-      dest: 'build'
+      dest: 'dist'
     },
 
     clean: ['<%= dirs.dest %>'],
