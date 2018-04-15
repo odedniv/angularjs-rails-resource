@@ -478,6 +478,12 @@
                     return result;
                 };
 
+                var RailsResource = null;
+                function getRailsResource() {
+                    RailsResource = RailsResource || RailsResourceInjector.getDependency('RailsResource');
+                    return RailsResource;
+                }
+
                 /**
                  * Iterates over the data deserializing each entry on arrays and each key/value on objects.
                  *
@@ -497,7 +503,9 @@
                             result.push(self.deserializeData(value, Resource, triggerPhase));
                         });
                     } else if (angular.isObject(data)) {
-                        if (angular.isDate(data)) {
+                        if (angular.isDate(data) ||
+                                (Resource && data instanceof Resource) ||
+                                (!Resource && data instanceof getRailsResource())) {
                             return data;
                         }
                         result = {};
